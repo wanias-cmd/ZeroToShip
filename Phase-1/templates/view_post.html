@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head><title>{{ post.title }}</title></head>
+<body>
+    <p><a href="{{ url_for('index') }}">&larr; Back to all posts</a></p>
+
+    <h1>{{ post.title }} ({{ post.status }})</h1>
+    <p>{{ post.description }}</p>
+    <p>Owner: {{ post.owner_id }}</p>
+
+    {% if post.status == "Open" and post.owner_id != user_id %}
+    <h2>Make an offer</h2>
+    <form method="POST" action="{{ url_for('create_offer_form', post_id=post.post_id) }}">
+        <label>What are you offering: <input type="text" name="offered_item_details" required></label>
+        <button type="submit">Submit Offer</button>
+    </form>
+    {% endif %}
+
+    <h2>Offers</h2>
+    <ul>
+        {% for offer in offers %}
+            <li>
+                Offer #{{ offer.offer_id }} from user {{ offer.proposer_id }}: {{ offer.offered_item_details }}
+                &mdash; Status: {{ offer.status }}
+                {% if post.owner_id == user_id and offer.status == "Pending" %}
+                <form method="POST" action="{{ url_for('accept_offer_form', post_id=post.post_id, offer_id=offer.offer_id) }}" style="display:inline">
+                    <button type="submit">Accept this offer</button>
+                </form>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

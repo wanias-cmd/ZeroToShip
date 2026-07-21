@@ -1,13 +1,45 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session, render_template, redirect, url_for
 from models.post import Post
 from models.offer import NegotiationOffer
 from db import load_db, save_db
 
 app = Flask(__name__)
+app.secret_key = "dev-secret-key-change-later"
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        session["user_id"] = int(request.form["user_id"])
+        return redirect(url_for("index"))
+    return render_template("login.html")
 
 @app.route("/")
-def home():
-    return "TradePost server is running!"
+def index():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = load_db()
+    return render_template("index.html", posts=db["posts"], user_id=session["user_id"])
+
+@app.route("/posts/create", methods=["POST"])
+def create_post_form():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = load_db()
+
+    new_id = len(db["posts"]) + 1
+    new_post = Post(
+        post_id=new_id,
+        title=request.form["title"],
+        description=request.form["description"],
+        owner_id=session["user_id"]
+    )
+
+    db["posts"].append(new_post.to_dict())
+    save_db(db)
+
+    return redirect(url_for("index"))
 
 @app.route("/posts", methods=["GET"])
 def get_posts():
@@ -32,7 +64,27 @@ def create_post():
 
     return jsonify(new_post.to_dict()), 201
 
-@app.route("/posts/<int:post_id>", methods=["GET"])
+@app.route("/posts/<int:post_id>")
+def view_post(post_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = load_db()
+
+    target_post = None
+    for post in db["posts"]:
+        if post["post_id"] == post_id:
+            target_post = post
+            break
+
+    if target_post is None:
+        return "Post not found", 404
+
+    offers = [o for o in db["offers"] if o["post_id"] == post_id]
+
+    return render_template("view_post.html", post=target_post, offers=offers, user_id=session["user_id"])
+
+@app.route("/api/posts/<int:post_id>", methods=["GET"])
 def get_post(post_id):
     db = load_db()
 
@@ -122,6 +174,66 @@ def accept_offer(post_id, offer_id):
     save_db(db)
 
     return jsonify(target_offer)
+
+@app.route("/posts/<int:post_id>/offers/create", methods=["POST"])
+def create_offer_form(post_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = load_db()
+
+    target_post = None
+    for post in db["posts"]:
+        if post["post_id"] == post_id:
+            target_post = post
+            break
+
+    if target_post is None or target_post["status"] != "Open":
+        return redirect(url_for("index"))
+
+    new_offer_id = len(db["offers"]) + 1
+    new_offer = NegotiationOffer(
+        offer_id=new_offer_id,
+        post_id=post_id,
+        proposer_id=session["user_id"],
+        offered_item_details=request.form["offered_item_details"],
+        turn_holder_id=target_post["owner_id"]
+    )
+
+    db["offers"].append(new_offer.to_dict())
+    save_db(db)
+
+    return redirect(url_for("view_post", post_id=post_id))
+
+
+@app.route("/posts/<int:post_id>/offers/<int:offer_id>/accept-form", methods=["POST"])
+def accept_offer_form(post_id, offer_id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    db = load_db()
+
+    target_post = None
+    for post in db["posts"]:
+        if post["post_id"] == post_id:
+            target_post = post
+            break
+
+    target_offer = None
+    for offer in db["offers"]:
+        if offer["offer_id"] == offer_id and offer["post_id"] == post_id:
+            target_offer = offer
+            break
+
+    if target_post and target_offer and target_post["status"] == "Open" and target_offer.get("status", "Pending") == "Pending":
+        target_offer["status"] = "Accepted"
+        for offer in db["offers"]:
+            if offer["post_id"] == post_id and offer["offer_id"] != offer_id and offer.get("status", "Pending") == "Pending":
+                offer["status"] = "Declined"
+        target_post["status"] = "Traded"
+        save_db(db)
+
+    return redirect(url_for("view_post", post_id=post_id))
 
 if __name__ == "__main__":
     app.run(debug=True)

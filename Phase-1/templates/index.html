@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><title>TradePost</title></head>
+<body>
+    <h1>TradePost</h1>
+    <p>Logged in as user {{ user_id }}</p>
+
+    <h2>Create a new post</h2>
+    <form method="POST" action="{{ url_for('create_post_form') }}">
+        <label>Title: <input type="text" name="title" required></label><br>
+        <label>Description: <input type="text" name="description" required></label><br>
+        <button type="submit">Post it</button>
+    </form>
+
+    <h2>All Posts</h2>
+    <ul>
+        {% for post in posts %}
+            <li>
+                <strong>{{ post.title }}</strong> ({{ post.status }})<br>
+                {{ post.description }}<br>
+                Owner: {{ post.owner_id }}<br>
+                <a href="{{ url_for('view_post', post_id=post.post_id) }}">View / Make Offer</a>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
