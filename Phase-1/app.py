@@ -80,5 +80,48 @@ def get_offers_for_post(post_id):
     matching_offers = [o for o in db["offers"] if o["post_id"] == post_id]
     return jsonify(matching_offers)
 
+@app.route("/posts/<int:post_id>/offers/<int:offer_id>/accept", methods=["POST"])
+def accept_offer(post_id, offer_id):
+    db = load_db()
+
+    target_post = None
+    for post in db["posts"]:
+        if post["post_id"] == post_id:
+            target_post = post
+            break
+
+    if target_post is None:
+        return jsonify({"error": "Post not found"}), 404
+
+    if target_post["status"] != "Open":
+        return jsonify({"error": "This post is already closed"}), 400
+
+    target_offer = None
+    for offer in db["offers"]:
+        if offer["offer_id"] == offer_id and offer["post_id"] == post_id:
+            target_offer = offer
+            break
+
+    if target_offer is None:
+        return jsonify({"error": "Offer not found for this post"}), 404
+
+    if target_offer.get("status", "Pending") != "Pending":
+        return jsonify({"error": "This offer is no longer pending"}), 400
+
+    # Accept the chosen offer
+    target_offer["status"] = "Accepted"
+
+    # Cascade: auto-decline every other pending offer on this post
+    for offer in db["offers"]:
+       if offer["post_id"] == post_id and offer["offer_id"] != offer_id and offer.get("status", "Pending") == "Pending":
+            offer["status"] = "Declined"
+
+    # Close the post
+    target_post["status"] = "Traded"
+
+    save_db(db)
+
+    return jsonify(target_offer)
+
 if __name__ == "__main__":
     app.run(debug=True)
