@@ -1,27 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head><title>TradePost</title></head>
-<body>
-    <h1>TradePost</h1>
-    <p>Logged in as user {{ user_id }}</p>
+{% extends "base.html" %}
+{% block content %}
 
-    <h2>Create a new post</h2>
+<div class="ticket">
+    <h2>List something to trade</h2>
     <form method="POST" action="{{ url_for('create_post_form') }}">
-        <label>Title: <input type="text" name="title" required></label><br>
-        <label>Description: <input type="text" name="description" required></label><br>
-        <button type="submit">Post it</button>
+        <label>Title
+            <input type="text" name="title" required>
+        </label>
+        <label>Description
+            <input type="text" name="description" required>
+        </label>
+        <button type="submit">Pin to the board</button>
     </form>
+</div>
 
-    <h2>All Posts</h2>
-    <ul>
-        {% for post in posts %}
-            <li>
-                <strong>{{ post.title }}</strong> ({{ post.status }})<br>
-                {{ post.description }}<br>
-                Owner: {{ post.owner_id }}<br>
-                <a href="{{ url_for('view_post', post_id=post.post_id) }}">View / Make Offer</a>
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+<h2 style="font-family:'Special Elite',cursive;">The Board</h2>
+
+{% for post in posts %}
+<div class="ticket">
+    <span class="stamp {{ post.status|lower }}">{{ post.status }}</span>
+    <h2><a class="ticket-link" href="{{ url_for('view_post', post_id=post.post_id) }}">{{ post.title }}</a></h2>
+    <p>{{ post.description }}</p>
+    <p class="meta">Listed by trader #{{ post.owner_id }} &middot; Ticket #{{ post.post_id }}</p>
+</div>
+{% endfor %}
+
+{% endblock %}

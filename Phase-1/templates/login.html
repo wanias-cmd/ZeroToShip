@@ -1,11 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head><title>TradePost - Login</title></head>
-<body>
-    <h1>Who are you?</h1>
-    <form method="POST">
-        <label>Your User ID: <input type="number" name="user_id" required></label>
-        <button type="submit">Continue</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-scene">
+    <div class="ticket login-card">
+        <p class="eyebrow">No cash. No catch. Just trade.</p>
+        <h1>Who's trading today?</h1>
+        <p class="subtitle">Enter your trader ID to browse the board, list an item, or make a claim.</p>
+        <form method="POST">
+            <label>Your User ID
+                <input type="number" name="user_id" required>
+            </label>
+            <button type="submit">Enter the Post</button>
+        </form>
+    </div>
+    <div class="floating-stamp">EST. TODAY</div>
+  </div>
+</div>
+{% endblock %}

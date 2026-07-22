@@ -235,5 +235,10 @@ def accept_offer_form(post_id, offer_id):
 
     return redirect(url_for("view_post", post_id=post_id))
 
+@app.route("/logout")
+def logout():
+    session.pop("user_id", None)
+    return redirect(url_for("login"))
+
 if __name__ == "__main__":
     app.run(debug=True)

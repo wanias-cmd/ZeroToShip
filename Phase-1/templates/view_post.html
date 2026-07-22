@@ -1,34 +1,35 @@
-<!DOCTYPE html>
-<html>
-<head><title>{{ post.title }}</title></head>
-<body>
-    <p><a href="{{ url_for('index') }}">&larr; Back to all posts</a></p>
+{% extends "base.html" %}
+{% block content %}
 
-    <h1>{{ post.title }} ({{ post.status }})</h1>
+<p><a class="back-link" href="{{ url_for('index') }}">&larr; Back to the board</a></p>
+
+<div class="ticket">
+    <span class="stamp {{ post.status|lower }}">{{ post.status }}</span>
+    <h1>{{ post.title }}</h1>
     <p>{{ post.description }}</p>
-    <p>Owner: {{ post.owner_id }}</p>
+    <p class="meta">Listed by trader #{{ post.owner_id }} &middot; Ticket #{{ post.post_id }}</p>
 
-    {% if post.status == "Open" and post.owner_id != user_id %}
-    <h2>Make an offer</h2>
+    {% if post.status == "Open" and post.owner_id != session.user_id %}
     <form method="POST" action="{{ url_for('create_offer_form', post_id=post.post_id) }}">
-        <label>What are you offering: <input type="text" name="offered_item_details" required></label>
-        <button type="submit">Submit Offer</button>
+        <label>What are you offering in trade?
+            <input type="text" name="offered_item_details" required>
+        </label>
+        <button type="submit">Submit claim stub</button>
     </form>
     {% endif %}
 
-    <h2>Offers</h2>
-    <ul>
-        {% for offer in offers %}
-            <li>
-                Offer #{{ offer.offer_id }} from user {{ offer.proposer_id }}: {{ offer.offered_item_details }}
-                &mdash; Status: {{ offer.status }}
-                {% if post.owner_id == user_id and offer.status == "Pending" %}
-                <form method="POST" action="{{ url_for('accept_offer_form', post_id=post.post_id, offer_id=offer.offer_id) }}" style="display:inline">
-                    <button type="submit">Accept this offer</button>
-                </form>
-                {% endif %}
-            </li>
-        {% endfor %}
-    </ul>
-</body>
-</html>
+    <h3 style="font-family:'Special Elite',cursive; margin-top:1.5rem;">Claim Stubs</h3>
+    {% for offer in offers %}
+    <div class="offer-stub">
+        <span>#{{ offer.offer_id }} &middot; Trader {{ offer.proposer_id }}: {{ offer.offered_item_details }}</span>
+        <span class="stamp {{ offer.status|lower }}">{{ offer.status }}</span>
+        {% if post.owner_id == session.user_id and offer.status == "Pending" %}
+        <form method="POST" action="{{ url_for('accept_offer_form', post_id=post.post_id, offer_id=offer.offer_id) }}">
+            <button type="submit">Accept</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
