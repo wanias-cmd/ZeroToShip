@@ -17,11 +17,10 @@ def index():
     db = load_db()
     return render_template("index.html", posts=db["posts"], user_id=session["user_id"])
 
-@app.route("/posts/create", methods=["POST"])
-def create_post_form():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
 
+@app.route("/posts/create", methods=["POST"])
+@login_required
+def create_post_form():
     db = load_db()
 
     new_id = len(db["posts"]) + 1
@@ -37,12 +36,15 @@ def create_post_form():
 
     return redirect(url_for("index"))
 
+
 @app.route("/posts", methods=["GET"])
 def get_posts():
     db = load_db()
     return jsonify(db["posts"])
 
+
 @app.route("/posts", methods=["POST"])
+@login_required
 def create_post():
     db = load_db()
     data = request.get_json()
@@ -59,6 +61,7 @@ def create_post():
     save_db(db)
 
     return jsonify(new_post.to_dict()), 201
+
 
 @app.route("/posts/<int:post_id>")
 def view_post(post_id):
@@ -80,6 +83,7 @@ def view_post(post_id):
 
     return render_template("view_post.html", post=target_post, offers=offers, user_id=session["user_id"])
 
+
 @app.route("/api/posts/<int:post_id>", methods=["GET"])
 def get_post(post_id):
     db = load_db()
@@ -90,7 +94,9 @@ def get_post(post_id):
 
     return jsonify({"error": "Post not found"}), 404
 
+
 @app.route("/posts/<int:post_id>/offers", methods=["POST"])
+@login_required
 def create_offer(post_id):
     db = load_db()
 
@@ -122,13 +128,16 @@ def create_offer(post_id):
 
     return jsonify(new_offer.to_dict()), 201
 
+
 @app.route("/posts/<int:post_id>/offers", methods=["GET"])
 def get_offers_for_post(post_id):
     db = load_db()
     matching_offers = [o for o in db["offers"] if o["post_id"] == post_id]
     return jsonify(matching_offers)
 
+
 @app.route("/posts/<int:post_id>/offers/<int:offer_id>/accept", methods=["POST"])
+@login_required
 def accept_offer(post_id, offer_id):
     db = load_db()
 
@@ -156,26 +165,22 @@ def accept_offer(post_id, offer_id):
     if target_offer.get("status", "Pending") != "Pending":
         return jsonify({"error": "This offer is no longer pending"}), 400
 
-    # Accept the chosen offer
     target_offer["status"] = "Accepted"
 
-    # Cascade: auto-decline every other pending offer on this post
     for offer in db["offers"]:
-       if offer["post_id"] == post_id and offer["offer_id"] != offer_id and offer.get("status", "Pending") == "Pending":
+        if offer["post_id"] == post_id and offer["offer_id"] != offer_id and offer.get("status", "Pending") == "Pending":
             offer["status"] = "Declined"
 
-    # Close the post
     target_post["status"] = "Traded"
 
     save_db(db)
 
     return jsonify(target_offer)
 
-@app.route("/posts/<int:post_id>/offers/create", methods=["POST"])
-def create_offer_form(post_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
 
+@app.route("/posts/<int:post_id>/offers/create", methods=["POST"])
+@login_required
+def create_offer_form(post_id):
     db = load_db()
 
     target_post = None
@@ -203,10 +208,8 @@ def create_offer_form(post_id):
 
 
 @app.route("/posts/<int:post_id>/offers/<int:offer_id>/accept-form", methods=["POST"])
+@login_required
 def accept_offer_form(post_id, offer_id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
     db = load_db()
 
     target_post = None
@@ -231,10 +234,12 @@ def accept_offer_form(post_id, offer_id):
 
     return redirect(url_for("view_post", post_id=post_id))
 
+
 @app.route("/logout")
 def logout():
     session.pop("user_id", None)
     return redirect(url_for("login"))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
