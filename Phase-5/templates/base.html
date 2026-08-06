@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TradePost</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="topbar">
+        <h1>TradePost</h1>
+        {% if session.user_id %}
+        <div class="session-info">
+            <span>Trading as #{{ session.user_id }}</span>
+            <a href="{{ url_for('logout') }}">Log out</a>
+        </div>
+        {% endif %}
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
