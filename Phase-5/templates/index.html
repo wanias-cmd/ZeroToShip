@@ -14,15 +14,20 @@
     </form>
 </div>
 
-<h2 style="font-family:'Special Elite',cursive;">The Board</h2>
+<h2 class="section-title" style="font-family:'Special Elite',cursive;">The Board</h2>
 
+<div class="marketplace-grid">
 {% for post in posts %}
-<div class="ticket">
-    <span class="stamp {{ post.status|lower }}">{{ post.status }}</span>
-    <h2><a class="ticket-link" href="{{ url_for('view_post', post_id=post.post_id) }}">{{ post.title }}</a></h2>
-    <p>{{ post.description }}</p>
-    <p class="meta">Listed by trader #{{ post.owner_id }} &middot; Ticket #{{ post.post_id }}</p>
-</div>
+    <a class="card-link" href="{{ url_for('view_post', post_id=post.post_id) }}">
+        <div class="item-card">
+            <span class="stamp {{ post.status|lower }}">{{ post.status }}</span>
+            <div class="thumb"></div>
+            <h3>{{ post.title }}</h3>
+            <p class="desc">{{ post.description }}</p>
+            <p class="meta">Listed by trader #{{ post.owner_id }} &middot; Ticket #{{ post.post_id }}</p>
+        </div>
+    </a>
 {% endfor %}
+</div>
 
 {% endblock %}

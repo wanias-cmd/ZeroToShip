@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="section-title" style="font-family:'Special Elite',cursive;">My Negotiations</h2>
+
+<div class="negotiation-list">
+{% for item in my_offers %}
+    {% set offer = item.offer %}
+    {% set post = item.post %}
+    <div class="negotiation-row">
+        <div class="info">
+            <h4>{{ post.title }}</h4>
+            <p>Offer #{{ offer.offer_id }} &middot; {{ offer.offered_item_details }}</p>
+        </div>
+
+        {% if offer.status == "Accepted" %}
+            <span class="badge accepted"><span class="dot"></span>Accepted</span>
+        {% elif offer.status == "Declined" %}
+            <span class="badge declined"><span class="dot"></span>Declined</span>
+        {% elif offer.turn_holder_id == user_id %}
+            <span class="badge your-turn"><span class="dot"></span>Your Turn</span>
+        {% else %}
+            <span class="badge waiting"><span class="dot"></span>Waiting for Peer</span>
+        {% endif %}
+    </div>
+{% else %}
+    <p>No active negotiations yet — make an offer on something from the board!</p>
+{% endfor %}
+</div>
+
+{% endblock %}

@@ -86,6 +86,27 @@ def view_post(post_id):
 
     return render_template("view_post.html", post=target_post, offers=offers, user_id=session["user_id"])
 
+@app.route("/negotiations")
+@login_required
+def negotiations():
+    db = load_db()
+    user_id = session["user_id"]
+
+    my_offers = []
+    for offer in db["offers"]:
+        post = None
+        for p in db["posts"]:
+            if p["post_id"] == offer["post_id"]:
+                post = p
+                break
+        if post is None:
+            continue
+
+        if offer["proposer_id"] == user_id or post["owner_id"] == user_id:
+            my_offers.append({"offer": offer, "post": post})
+
+    return render_template("negotiations.html", my_offers=my_offers, user_id=user_id)
+
 
 @app.route("/api/posts/<int:post_id>", methods=["GET"])
 def get_post(post_id):
